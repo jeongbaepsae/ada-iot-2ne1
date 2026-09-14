@@ -13,9 +13,6 @@ documented in [docs/APPLE_WATCH_ROADMAP_KO.md](docs/APPLE_WATCH_ROADMAP_KO.md).
 The team assignments due September 15, 2026 are documented in
 [docs/WEEKLY_TASKS_2026-09-15_KO.md](docs/WEEKLY_TASKS_2026-09-15_KO.md).
 
-The current team assignments due September 15, 2026 are documented in
-[docs/WEEKLY_TASKS_2026-09-15_KO.md](docs/WEEKLY_TASKS_2026-09-15_KO.md).
-
 ## Data
 
 The repository combines two independently collected datasets while preserving their provenance:
@@ -73,6 +70,18 @@ approximately 20-second training recordings is preferable because the model aggr
 The resulting `models/tremor_rf_b2.pkl` is a local Python pickle; load only an artifact
 you created or otherwise trust. This model detects the dataset's voluntarily simulated
 tremor and is not a clinical diagnostic model.
+
+## Weekly submissions
+
+Per-member classifier and dataset submissions for the September 15, 2026 tasks live
+under `experiments/<name>/` and `data_sources/<name>/`.
+
+| Member | Classifier | Open dataset |
+| --- | --- | --- |
+| euno | [Gradient Boosting](experiments/euno/gradient_boosting/README.md) | [PADS](data_sources/euno/pads/README.md) |
+
+Converted third-party data is written to the git-ignored `data/processed/` directory
+and is never committed.
 
 ## Experimental protocol
 

@@ -94,6 +94,7 @@ data_sources/<name>/<dataset_name>/
 
 | 팀원 | 분류 모델 | 오픈소스 데이터셋 | 상태 |
 | --- | --- | --- | --- |
+| euno | Gradient Boosting (LightGBM, 대조군 XGBoost) | PADS (PhysioNet, CC BY-NC-SA) | 제출 완료 |
 | 배정 필요 | 배정 필요 | 배정 필요 | 시작 전 |
 
 ## 완료 기준
