@@ -1,0 +1,95 @@
+{
+  "n_recordings": 1569,
+  "n_participants": 160,
+  "cv": "StratifiedGroupKFold(n_splits=5) grouped by participant",
+  "results": [
+    {
+      "level": "participant",
+      "classifier": "LightGBM",
+      "feature_set": "B1_time",
+      "balanced_accuracy_mean": 0.5487,
+      "balanced_accuracy_std": 0.04,
+      "sensitivity_mean": 1.0,
+      "specificity_mean": 0.0974,
+      "macro_f1_mean": 0.4284,
+      "auroc_mean": 0.9023
+    },
+    {
+      "level": "participant",
+      "classifier": "LightGBM",
+      "feature_set": "B2_time_frequency",
+      "balanced_accuracy_mean": 0.6314,
+      "balanced_accuracy_std": 0.0651,
+      "sensitivity_mean": 0.99,
+      "specificity_mean": 0.2729,
+      "macro_f1_mean": 0.5699,
+      "auroc_mean": 0.9594
+    },
+    {
+      "level": "participant",
+      "classifier": "XGBoost",
+      "feature_set": "B1_time",
+      "balanced_accuracy_mean": 0.5435,
+      "balanced_accuracy_std": 0.0324,
+      "sensitivity_mean": 0.9789,
+      "specificity_mean": 0.108,
+      "macro_f1_mean": 0.4314,
+      "auroc_mean": 0.8964
+    },
+    {
+      "level": "participant",
+      "classifier": "XGBoost",
+      "feature_set": "B2_time_frequency",
+      "balanced_accuracy_mean": 0.6312,
+      "balanced_accuracy_std": 0.0621,
+      "sensitivity_mean": 0.99,
+      "specificity_mean": 0.2724,
+      "macro_f1_mean": 0.5701,
+      "auroc_mean": 0.9699
+    },
+    {
+      "level": "recording",
+      "classifier": "LightGBM",
+      "feature_set": "B1_time",
+      "balanced_accuracy_mean": 0.7003,
+      "balanced_accuracy_std": 0.0296,
+      "sensitivity_mean": 0.654,
+      "specificity_mean": 0.7465,
+      "macro_f1_mean": 0.6874,
+      "auroc_mean": 0.7679
+    },
+    {
+      "level": "recording",
+      "classifier": "LightGBM",
+      "feature_set": "B2_time_frequency",
+      "balanced_accuracy_mean": 0.7626,
+      "balanced_accuracy_std": 0.0412,
+      "sensitivity_mean": 0.7182,
+      "specificity_mean": 0.807,
+      "macro_f1_mean": 0.7503,
+      "auroc_mean": 0.8513
+    },
+    {
+      "level": "recording",
+      "classifier": "XGBoost",
+      "feature_set": "B1_time",
+      "balanced_accuracy_mean": 0.6929,
+      "balanced_accuracy_std": 0.0242,
+      "sensitivity_mean": 0.6485,
+      "specificity_mean": 0.7372,
+      "macro_f1_mean": 0.676,
+      "auroc_mean": 0.7637
+    },
+    {
+      "level": "recording",
+      "classifier": "XGBoost",
+      "feature_set": "B2_time_frequency",
+      "balanced_accuracy_mean": 0.761,
+      "balanced_accuracy_std": 0.0388,
+      "sensitivity_mean": 0.7069,
+      "specificity_mean": 0.8151,
+      "macro_f1_mean": 0.7485,
+      "auroc_mean": 0.8456
+    }
+  ]
+}

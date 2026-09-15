@@ -1,0 +1,9 @@
+level,classifier,feature_set,balanced_accuracy_mean,balanced_accuracy_std,sensitivity_mean,specificity_mean,macro_f1_mean,auroc_mean
+participant,LightGBM,B1_time,0.5487,0.04,1.0,0.0974,0.4284,0.9023
+participant,LightGBM,B2_time_frequency,0.6314,0.0651,0.99,0.2729,0.5699,0.9594
+participant,XGBoost,B1_time,0.5435,0.0324,0.9789,0.108,0.4314,0.8964
+participant,XGBoost,B2_time_frequency,0.6312,0.0621,0.99,0.2724,0.5701,0.9699
+recording,LightGBM,B1_time,0.7003,0.0296,0.654,0.7465,0.6874,0.7679
+recording,LightGBM,B2_time_frequency,0.7626,0.0412,0.7182,0.807,0.7503,0.8513
+recording,XGBoost,B1_time,0.6929,0.0242,0.6485,0.7372,0.676,0.7637
+recording,XGBoost,B2_time_frequency,0.761,0.0388,0.7069,0.8151,0.7485,0.8456

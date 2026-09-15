@@ -1,0 +1,4 @@
+pads_condition,target,participants,flagged_as_tremor,median_probability,rate
+Essential Tremor,1,21,21,0.9988470497392811,1.0
+Healthy,0,79,58,0.6596493088950663,0.734
+Parkinson's,1,60,59,0.9959137740981552,0.983
