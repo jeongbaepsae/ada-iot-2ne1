@@ -26,8 +26,8 @@ test로 나뉘는 일이 구조적으로 발생하지 않는다.
 
 feature set 두 가지를 모두 평가한다.
 
-- `B1_time`: 시간 영역 feature만 사용 (10개)
-- `B2_time_frequency`: 시간 + 주파수 feature 전체 사용 (52개)
+- `B1_time`: 시간 영역 feature만 사용 (20개 = 5개 통계 × 2개 센서 × median/IQR)
+- `B2_time_frequency`: 시간 + 주파수 feature 전체 사용 (52개 = 위 20개 + 스펙트럼 8개 × 2 × 2)
 
 ### 모델
 
