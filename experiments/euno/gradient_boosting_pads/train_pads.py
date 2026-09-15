@@ -20,6 +20,11 @@ Two differences from ``train.py`` are forced by the dataset itself:
   a patient as a miss. A participant-level view is reported alongside, taking the
   maximum probability over that participant's recordings, which matches the
   clinical reading "tremor present in at least one hand".
+* The fixed 0.5 threshold is badly placed for this data: both classes sit above
+  it, so the participant-level view scores 0.63 despite an AUROC of 0.96. The
+  decision threshold is therefore also chosen, using an inner subject-grouped
+  split of the training fold only. Both the fixed and the selected threshold are
+  reported so the size of that effect stays visible.
 
 Usage:
     python experiments/euno/gradient_boosting/train_pads.py
@@ -39,6 +44,13 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from sklearn.metrics import (
+    average_precision_score,
+    balanced_accuracy_score,
+    confusion_matrix,
+    f1_score,
+    roc_auc_score,
+)
 from sklearn.model_selection import StratifiedGroupKFold
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -56,6 +68,7 @@ FEATURE_CACHE = RESULTS / "pads_recording_features_3s.csv"
 FEATURE_SETS = ("B1_time", "B2_time_frequency")
 CLASSIFIERS = ("LightGBM", "XGBoost")
 N_SPLITS = 5
+N_INNER_SPLITS = 3
 RANDOM_STATE = 42
 
 
@@ -85,9 +98,82 @@ def build_features(force: bool) -> pd.DataFrame:
     return frame
 
 
+def score_at(y_true: np.ndarray, probability: np.ndarray, threshold: float) -> dict:
+    """Confusion-based metrics at an explicit threshold, plus threshold-free ones."""
+    prediction = (probability >= threshold).astype(int)
+    tn, fp, fn, tp = confusion_matrix(y_true, prediction, labels=[0, 1]).ravel()
+    return {
+        "threshold": float(threshold),
+        "n_test": int(len(y_true)),
+        "balanced_accuracy": float(balanced_accuracy_score(y_true, prediction)),
+        "sensitivity": float(tp / (tp + fn)) if tp + fn else float("nan"),
+        "specificity": float(tn / (tn + fp)) if tn + fp else float("nan"),
+        "macro_f1": float(f1_score(y_true, prediction, average="macro")),
+        "auroc": float(roc_auc_score(y_true, probability)),
+        "auprc": float(average_precision_score(y_true, probability)),
+        "tn": int(tn), "fp": int(fp), "fn": int(fn), "tp": int(tp),
+    }
+
+
+def best_threshold(target: np.ndarray, probability: np.ndarray) -> float:
+    """Threshold that maximises balanced accuracy on the given predictions."""
+    candidates = np.unique(np.round(probability, 3))
+    scores = [
+        balanced_accuracy_score(target, (probability >= value).astype(int))
+        for value in candidates
+    ]
+    return float(candidates[int(np.argmax(scores))])
+
+
+def inner_out_of_fold(
+    frame: pd.DataFrame, train_index: np.ndarray, columns: list[str], classifier_name: str
+) -> pd.DataFrame:
+    """Out-of-fold probabilities inside the training fold.
+
+    The threshold must not be chosen on predictions the model has already fitted,
+    because a boosted tree is overconfident on its own training data. An inner
+    subject-grouped split produces honest probabilities within the training fold,
+    and the threshold picked on those transfers to the outer test fold without
+    ever touching it.
+    """
+    import train as gb  # sibling experiment: fixed hyperparameters
+
+    subset = frame.iloc[train_index]
+    inner = StratifiedGroupKFold(
+        n_splits=N_INNER_SPLITS, shuffle=True, random_state=RANDOM_STATE
+    )
+    probability = np.zeros(len(subset), dtype=float)
+    for inner_train, inner_test in inner.split(
+        subset, subset["target"], groups=subset["subject_id"]
+    ):
+        model = gb.build_classifier(classifier_name)
+        model.fit(subset.iloc[inner_train][columns], subset.iloc[inner_train]["target"])
+        probability[inner_test] = model.predict_proba(
+            subset.iloc[inner_test][columns]
+        )[:, 1]
+    return pd.DataFrame(
+        {
+            "subject_id": subset["subject_id"].to_numpy(),
+            "target": subset["target"].to_numpy(),
+            "probability": probability,
+        }
+    )
+
+
+def by_participant(frame: pd.DataFrame) -> pd.DataFrame:
+    """One row per participant: the maximum probability over their recordings.
+
+    Parkinsonian tremor is often unilateral and intermittent, so a participant
+    counts as detected when any recording crosses the threshold.
+    """
+    return frame.groupby("subject_id", as_index=False).agg(
+        target=("target", "first"), probability=("probability", "max")
+    )
+
+
 def evaluate(frame: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Subject-grouped stratified 5-fold cross-validation."""
-    import train as gb  # the sibling script holds the fixed hyperparameters
+    import train as gb  # sibling experiment: fixed hyperparameters
 
     subjects = frame["subject_id"].to_numpy()
     targets = frame["target"].to_numpy()
@@ -112,24 +198,54 @@ def evaluate(frame: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
                     frame.loc[train_mask, columns], frame.loc[train_mask, "target"]
                 )
                 probability = model.predict_proba(frame.loc[test_mask, columns])[:, 1]
-                score = baseline.score_predictions(
-                    frame.loc[test_mask, "target"].to_numpy(), probability
-                )
-                metrics.append(
+
+                test = pd.DataFrame(
                     {
-                        "level": "recording",
-                        "fold": fold,
-                        "classifier": classifier_name,
-                        "feature_set": feature_set,
-                        "n_train_subjects": int(
-                            frame.loc[train_mask, "subject_id"].nunique()
-                        ),
-                        "n_test_subjects": int(
-                            frame.loc[test_mask, "subject_id"].nunique()
-                        ),
-                        **score,
+                        "subject_id": frame.loc[test_mask, "subject_id"].to_numpy(),
+                        "target": frame.loc[test_mask, "target"].to_numpy(),
+                        "probability": probability,
                     }
                 )
+                inner = inner_out_of_fold(
+                    frame, train_index, columns, classifier_name
+                )
+
+                recording_threshold = best_threshold(
+                    inner["target"].to_numpy(), inner["probability"].to_numpy()
+                )
+                inner_participant = by_participant(inner)
+                participant_threshold = best_threshold(
+                    inner_participant["target"].to_numpy(),
+                    inner_participant["probability"].to_numpy(),
+                )
+                test_participant = by_participant(test)
+
+                for level, table, selected in (
+                    ("recording", test, recording_threshold),
+                    ("participant", test_participant, participant_threshold),
+                ):
+                    for rule, threshold in (
+                        ("fixed_0.5", 0.5),
+                        ("selected", selected),
+                    ):
+                        metrics.append(
+                            {
+                                "level": level,
+                                "rule": rule,
+                                "fold": fold,
+                                "classifier": classifier_name,
+                                "feature_set": feature_set,
+                                "n_test_subjects": int(table["subject_id"].nunique())
+                                if level == "recording"
+                                else int(len(table)),
+                                **score_at(
+                                    table["target"].to_numpy(),
+                                    table["probability"].to_numpy(),
+                                    threshold,
+                                ),
+                            }
+                        )
+
                 for index, value in zip(frame.index[test_mask], probability):
                     predictions.append(
                         {
@@ -143,38 +259,13 @@ def evaluate(frame: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
                             "pads_condition": frame.at[index, "pads_condition"],
                             "target": int(frame.at[index, "target"]),
                             "probability": float(value),
+                            "recording_threshold": recording_threshold,
+                            "participant_threshold": participant_threshold,
                         }
                     )
         print(f"  fold {fold}/{N_SPLITS} done", flush=True)
 
     return pd.DataFrame(metrics), pd.DataFrame(predictions)
-
-
-def participant_level(predictions: pd.DataFrame) -> pd.DataFrame:
-    """Score one prediction per participant: the maximum over their recordings.
-
-    Parkinsonian tremor is often unilateral and can be intermittent, so a patient
-    is counted as detected when any of their recordings crosses the threshold.
-    """
-    rows: list[dict[str, object]] = []
-    grouped = predictions.groupby(["fold", "classifier", "feature_set"])
-    for (fold, classifier, feature_set), group in grouped:
-        aggregated = group.groupby("subject_id").agg(
-            target=("target", "first"), probability=("probability", "max")
-        )
-        score = baseline.score_predictions(
-            aggregated["target"].to_numpy(), aggregated["probability"].to_numpy()
-        )
-        rows.append(
-            {
-                "level": "participant",
-                "fold": fold,
-                "classifier": classifier,
-                "feature_set": feature_set,
-                **score,
-            }
-        )
-    return pd.DataFrame(rows)
 
 
 def per_task(predictions: pd.DataFrame) -> pd.DataFrame:
@@ -217,38 +308,44 @@ def by_condition(predictions: pd.DataFrame) -> pd.DataFrame:
     return summary
 
 
-def plot_summary(recording: pd.DataFrame, participant: pd.DataFrame) -> None:
-    combined = pd.concat([recording, participant], ignore_index=True)
+def plot_summary(metrics: pd.DataFrame) -> None:
     summary = (
-        combined.groupby(["level", "classifier", "feature_set"])["balanced_accuracy"]
+        metrics.groupby(["level", "rule", "classifier", "feature_set"])[
+            "balanced_accuracy"
+        ]
         .mean()
         .reset_index()
     )
     plt.style.use("seaborn-v0_8-whitegrid")
     fig, axes = plt.subplots(1, 2, figsize=(12, 5), sharey=True)
     width = 0.36
-    for axis, level, title in zip(
-        axes,
-        ("recording", "participant"),
-        ("Recording level", "Participant level (max over recordings)"),
-    ):
+    panels = (
+        ("recording", "Recording level"),
+        ("participant", "Participant level (max over recordings)"),
+    )
+    for axis, (level, title) in zip(axes, panels):
         subset = summary[summary["level"] == level].set_index(
-            ["classifier", "feature_set"]
+            ["rule", "classifier", "feature_set"]
         )
-        x = np.arange(len(CLASSIFIERS))
+        labels, groups = [], []
+        for rule, rule_label in (("fixed_0.5", "0.5 고정"), ("selected", "임계값 선택")):
+            for classifier in CLASSIFIERS:
+                labels.append(f"{classifier}\n{rule_label}")
+                groups.append((rule, classifier))
+        x = np.arange(len(groups))
         for offset, feature_set in zip((-width / 2, width / 2), FEATURE_SETS):
             values = [
-                subset.loc[(classifier, feature_set), "balanced_accuracy"]
-                for classifier in CLASSIFIERS
+                subset.loc[(rule, classifier, feature_set), "balanced_accuracy"]
+                for rule, classifier in groups
             ]
             bars = axis.bar(x + offset, values, width=width, label=feature_set)
-            axis.bar_label(bars, fmt="%.3f", fontsize=8, padding=2)
-        axis.set_xticks(x, list(CLASSIFIERS))
+            axis.bar_label(bars, fmt="%.3f", fontsize=7, padding=2)
+        axis.set_xticks(x, labels, fontsize=8)
         axis.set_ylim(0.5, 1.02)
         axis.axhline(0.5, color="black", linestyle="--", linewidth=1)
         axis.set_title(title)
         axis.set_ylabel("Balanced accuracy")
-        axis.legend(loc="lower left", fontsize=9)
+        axis.legend(loc="lower left", fontsize=8)
     fig.suptitle(
         "PADS only — subject-grouped 5-fold cross-validation (160 participants)",
         fontsize=13,
@@ -274,10 +371,7 @@ def main() -> None:
     )
     print(frame.groupby("label")["recording_id"].count().to_string())
 
-    recording_metrics, predictions = evaluate(frame)
-    participant_metrics = participant_level(predictions)
-
-    all_metrics = pd.concat([recording_metrics, participant_metrics], ignore_index=True)
+    all_metrics, predictions = evaluate(frame)
     all_metrics.to_csv(HERE / "pads_only_results.csv", index=False)
     predictions.to_csv(HERE / "pads_only_predictions.csv", index=False)
 
@@ -287,7 +381,7 @@ def main() -> None:
     condition_table.to_csv(HERE / "pads_only_by_condition.csv", index=False)
 
     summary = (
-        all_metrics.groupby(["level", "classifier", "feature_set"])
+        all_metrics.groupby(["level", "rule", "classifier", "feature_set"])
         .agg(
             balanced_accuracy_mean=("balanced_accuracy", "mean"),
             balanced_accuracy_std=("balanced_accuracy", "std"),
@@ -295,12 +389,13 @@ def main() -> None:
             specificity_mean=("specificity", "mean"),
             macro_f1_mean=("macro_f1", "mean"),
             auroc_mean=("auroc", "mean"),
+            threshold_mean=("threshold", "mean"),
         )
         .reset_index()
         .round(4)
     )
     summary.to_csv(HERE / "pads_only_summary.csv", index=False)
-    plot_summary(recording_metrics, participant_metrics)
+    plot_summary(all_metrics)
 
     (HERE / "pads_only_summary.json").write_text(
         json.dumps(
