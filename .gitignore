@@ -5,6 +5,8 @@ __pycache__/
 .DS_Store
 .venv/
 models/*.pkl
+data_sources/**/raw/
+data_sources/**/prepared/
 
 # PADS 파생물 (CC BY-NC-SA). 준비 스크립트로 재생성한다.
 results/pads_recording_features_*.csv
