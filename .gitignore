@@ -7,3 +7,5 @@ __pycache__/
 models/*.pkl
 data_sources/**/raw/
 data_sources/**/prepared/
+experiments/hmuzn/hist_gradient_boosting/pads_results/recording_features.csv
+experiments/hmuzn/hist_gradient_boosting/pads_results/predictions.csv

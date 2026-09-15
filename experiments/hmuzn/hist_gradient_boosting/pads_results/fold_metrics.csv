@@ -1,0 +1,3 @@
+fold,test_subjects,n_test,balanced_accuracy,sensitivity,specificity,macro_f1,auroc,tn,fp,fn,tp
+1,pads_001;pads_009,20,0.9,0.8,1.0,0.898989898989899,0.9,10,0,2,8
+2,pads_003;pads_005,20,1.0,1.0,1.0,1.0,1.0,10,0,0,10

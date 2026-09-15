@@ -1,0 +1,14 @@
+{
+  "dataset": "PADS strict pilot",
+  "n_subjects": 4,
+  "n_recordings": 40,
+  "n_splits": 2,
+  "label_warning": "Participant-level diagnosis-derived weak labels; not per-window tremor ground truth.",
+  "mean_metrics": {
+    "balanced_accuracy": 0.95,
+    "sensitivity": 0.9,
+    "specificity": 1.0,
+    "macro_f1": 0.9494949494949495,
+    "auroc": 0.95
+  }
+}
