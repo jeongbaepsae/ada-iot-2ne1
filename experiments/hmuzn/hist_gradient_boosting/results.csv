@@ -1,0 +1,8 @@
+fold,model,n_test,balanced_accuracy,sensitivity,specificity,macro_f1,auroc,auprc,tn,fp,fn,tp
+BIBI,HistGradientBoosting,20.0,1.0,1.0,1.0,1.0,1.0,1.0,10,0,0,10
+anna,HistGradientBoosting,40.0,1.0,1.0,1.0,1.0,1.0,1.0,20,0,0,20
+euno,HistGradientBoosting,50.0,1.0,1.0,1.0,1.0,1.0,1.0,25,0,0,25
+march,HistGradientBoosting,20.0,0.95,0.9,1.0,0.949874686716792,0.95,0.95,10,0,1,9
+mu,HistGradientBoosting,40.0,1.0,1.0,1.0,1.0,1.0,1.0,20,0,0,20
+seojin,HistGradientBoosting,50.0,1.0,1.0,1.0,1.0,1.0,1.0,25,0,0,25
+MEAN,HistGradientBoosting,36.666666666666664,0.9916666666666667,0.9833333333333334,1.0,0.9916457811194653,0.9916666666666667,0.9916666666666667,110,0,1,109

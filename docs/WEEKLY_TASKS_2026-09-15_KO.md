@@ -94,6 +94,7 @@ data_sources/<name>/<dataset_name>/
 
 | 팀원 | 분류 모델 | 오픈소스 데이터셋 | 상태 |
 | --- | --- | --- | --- |
+| hmuzn | Histogram Gradient Boosting | IMU-Wild (Zenodo 3519213) | 구현 및 검증 완료 |
 | seojin | 배정 필요 | [PADS - Parkinsons Disease Smartwatch dataset](../data_sources/seojin/pads/README.md) | 데이터셋 조사 완료 |
 
 ## 완료 기준
