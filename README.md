@@ -4,10 +4,14 @@ PADS 공개 데이터에서 떨림우세형 파킨슨(PD-TD)과 건강 대조군
 3차원으로 비교하고, 현장에서 직접 측정까지 할 수 있는 단일 페이지 도구입니다.
 
 - `index.html` — 뷰어 본체 (데이터 내장)
-- `figure3d.js` — 3D 인체 모델 (Three.js, 외부 모델 없이 직접 구성)
 - `field.js` — 현장 측정 콘솔 (DeviceMotion)
 
-빌드 과정은 없습니다. 외부 의존은 Plotly·Three.js(CDN)와 Google Fonts 뿐입니다.
+빌드 과정은 없습니다. 외부 의존은 Plotly(CDN)와 Google Fonts 뿐입니다.
+
+담긴 것: 가속도·자이로 3차원 점 분포(개인별 / 군별 비교 / 군 전체 겹쳐보기),
+2–12 Hz 필터 전·후 비교, 시간 구간 조절과 시간순 쌓기,
+임상 표준 그림 5종(PSD · 떨림 파형 · 스펙트로그램 · 군별 진폭 분포 · 주파수×진폭 평면),
+현장 측정 콘솔.
 
 생성 스크립트는 https://github.com/jeongbaepsae/iOT-tremor-dataset 쪽
 `analysis/` 에 있습니다 (`pads_cohort.py` → `export_cohort_3d.py` → `build_cohort_viewer.py`).
@@ -38,4 +42,5 @@ Varghese J, Brenner A, Plagwitz L, van Alen C, Fujarski M, Warnecke T.
 ## 주의
 
 연구용 도구입니다. 진단이나 치료 판단에 사용하지 마세요.
-3D 인체 애니메이션의 손 경로는 보간이며 측정값이 아닙니다 — 페이지 안의 경고를 읽으세요.
+표시되는 값은 모두 측정값에서 계산한 것입니다. 보간으로 손 경로를 그리던
+3D 인체 애니메이션은 접촉 검출 검증에 실패해 제거했습니다.
