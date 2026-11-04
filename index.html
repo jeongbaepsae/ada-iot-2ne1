@@ -291,9 +291,9 @@ code{font-family:var(--font-num);font-size:.9em;background:var(--sunk);padding:1
 
   <section class="card clinic">
     <h2 class="ch">임상 표준 그림</h2>
-    <p class="chsub">진전 문헌에서 쓰는 표현들입니다. 위 3D 그림과 달리 <b>보간이 전혀 없고
-    측정값만</b> 들어갑니다. 근거: Haubenberger et al., <i>Mov Disord</i> 2016;31:1327
-    — 진전은 스펙트럼으로 주파수·진폭을 재고, 진폭은 로그로 다룹니다.</p>
+    <p class="chsub">진전 문헌에서 표준으로 쓰는 표현들입니다. 근거: Haubenberger et al.,
+    <i>Mov Disord</i> 2016;31:1327 — 진전은 스펙트럼으로 주파수·진폭을 재고, 진폭은
+    로그로 다룹니다.</p>
     <div class="cgrid">
       <figure><figcaption>파워 스펙트럼 밀도 · 선택 시행 vs 군 중앙값</figcaption>
         <div id="cPsd" class="cplot"></div></figure>
@@ -314,14 +314,13 @@ code{font-family:var(--font-num);font-size:.9em;background:var(--sunk);padding:1
     — 손목에 센서를 찬 각도가 달라도 시행끼리 겹쳐 볼 수 있습니다. 필터를 켜면 평균이 0이므로
     초기화와 무관하게 원점 중심이 됩니다.</p>
     <p><b>군별 비교</b>는 두 패널의 축 범위를 같게 맞춥니다. 범위가 다르면 진폭 차이가 눈에서 사라지기
-    때문입니다. <b>접근 구간</b>은 도달 운동 대역(0.5–3 Hz) 포락선의 골을 접촉 시점으로 보고
-    그 직전 1.2초를 잘라냅니다. 코에 닿기 직전 구간이 의도성 떨림이 가장 커지는 대목입니다.</p>
+    때문입니다.</p>
+    <p>판독 줄의 <b>떨림 변위 RMS</b>는 가속도를 주파수 영역에서 두 번 적분해 구한
+    3–12 Hz 떨림의 실제 크기(mm)입니다. 시간영역 적분은 바이어스가 t² 로 누적돼 못 쓰지만,
+    대역 바깥을 0 으로 두면 적분 상수가 정의되지 않는 성분 자체가 없어 드리프트가 생기지
+    않습니다. 독립 검산(대역 RMS 가속도 ÷ (2πf)²)과 1.17배 이내로 일치합니다.</p>
     <p>각 기록은 시작 0.5초를 버립니다. PADS는 과제 시작에 손목 진동 알림이 들어가기 때문입니다
     (배포 스크립트 <code>run_preprocessing.py</code>의 <code>data[:, 48:]</code>).</p>
-    <p><b>인체 모델</b>은 외부 모델을 쓰지 않고 Three.js 로 직접 세운 블록 인체입니다.
-    모든 마디를 관절 그룹에 −Y 로 매달아 쉼 자세 축을 하나로 통일했기 때문에, 리그마다
-    다른 축 규약을 추측할 필요 없이 어깨·팔꿈치·손 겨냥이 결정적으로 맞습니다. 비율과
-    앉은 자세, 의자도 과제에 맞춰 정했습니다.</p>
     <p style="margin-top:14px;padding-top:12px;border-top:1px solid var(--rule-soft)">
     <b>데이터 출처.</b> PADS — Parkinson's Disease Smartwatch dataset v1.0.0, PhysioNet.
     Varghese J, Brenner A, Plagwitz L, van Alen C, Fujarski M, Warnecke T.
