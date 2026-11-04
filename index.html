@@ -392,6 +392,13 @@ function panelHTML(id, title, meta){
           <div class="plot" id="${id}"></div></section>`;
 }
 
+/** 화면에 점이 쌓이는 속도. 원본 레이트를 솎음 비율로 나눈 값이다. */
+function ptRate(t){ return t.fs / (t.dec || 1); }
+function rateLabel(t){
+  const r = ptRate(t);
+  return `초당 ${r.toFixed(0)}점 · ${(1000/r).toFixed(0)} ms 간격`;
+}
+
 function groupTrials(g, like){
   return T.filter(x=>x.group===g && x.task===like.task && x.wrist===like.wrist);
 }
@@ -404,14 +411,16 @@ function render(){
     const which = S.filt==='filt' ? 'filt' : 'raw';
     const A = groupTrials('PD-TD', t), B = groupTrials('Healthy', t);
     const setA = A.map(x=>pick(x, which)), setB = B.map(x=>pick(x, which));
-    const r = rangeOf([].concat(...A.map(x=>pick(x, which, true)),
-                               ...B.map(x=>pick(x, which, true))));
+    const r = rangeOf(A.map(x=>pick(x, which, true))
+                      .concat(B.map(x=>pick(x, which, true))));
     host.className = 'panels two';
     host.innerHTML =
       panelHTML('plotA', `PD-TD ${A.length}명 · ${t.task}${t.wrist}`,
-                `±${r.toPrecision(3)} ${unit()} · ${setA.reduce((n,p)=>n+p.length,0)} pts`) +
+                `축 ±${r.toPrecision(3)} ${unit()} · ${setA.reduce((n,p)=>n+p.length,0)}점`
+                + ` · 1인당 ${rateLabel(t)}`) +
       panelHTML('plotB', `Healthy ${B.length}명 · ${t.task}${t.wrist}`,
-                `±${r.toPrecision(3)} ${unit()} · ${setB.reduce((n,p)=>n+p.length,0)} pts`);
+                `축 ±${r.toPrecision(3)} ${unit()} · ${setB.reduce((n,p)=>n+p.length,0)}점`
+                + ` · 1인당 ${rateLabel(t)}`);
     [['plotA', setA, css('--pd')], ['plotB', setB, css('--hc')]].forEach(([id,sets,col])=>{
       const pts = [].concat(...sets);
       Plotly.react(id, [{type:'scatter3d', mode:'markers',
@@ -450,7 +459,9 @@ function render(){
     const lab = (S.filt==='both'&&S.mode!=='group') ? (i===0?'원본':'2–12 Hz') : tt.group;
     const rr = (S.mode==='group') ? r : rangeOf([full[i]]);
     return panelHTML(id, `${lab} · ${tt.sid} · ${tt.task}${tt.wrist}`,
-      `축 ±${rr.toPrecision(3)} ${unit()} (기록 전체 기준) · 표시 ${sets[i].length} pts`);
+      `축 ±${rr.toPrecision(3)} ${unit()} (기록 전체 기준)`
+      + ` · ${sets[i].length}점 / ${full[i].length}점`
+      + ` · ${rateLabel(tt)}`);
   }).join('');
   specs.forEach(([tt,id],i)=>{
     if(!tt) return;
@@ -513,8 +524,10 @@ document.getElementById('origin').addEventListener('change',e=>{S.origin=e.targe
 function syncTime(){
   const t=T[S.cur];
   document.getElementById('o0').textContent=(t.dur_s*S.t0/100).toFixed(1)+' s';
+  const shown = Math.max(0, (t.dur_s*(S.t1-S.t0)/100));
   document.getElementById('o1').textContent=
-    (t.dur_s*S.t1/100).toFixed(1)+' / '+t.dur_s.toFixed(1)+' s';
+    (t.dur_s*S.t1/100).toFixed(1)+' / '+t.dur_s.toFixed(1)+' s'
+    + '  (' + shown.toFixed(1) + '초분 · 약 ' + Math.round(shown*ptRate(t)) + '점)';
 }
 // 시간순 쌓기: 끝 시점을 늘려가며 점이 누적되는 모습을 보여준다
 let accumTimer=null;
